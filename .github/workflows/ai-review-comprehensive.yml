@@ -1,0 +1,35 @@
+name: AI Code Review (Comprehensive)
+
+# Trigger on pull request events
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    
+    # Required permissions for the action
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: AI Code Review (All Suggestions)
+        uses: your-org/ai-code-reviewer@v1
+        with:
+          # GitHub token for API authentication (automatically provided)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Anthropic API key
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          
+          # Claude 3.5 Sonnet for best balance of quality and cost
+          model: 'claude-3-5-sonnet-20241022'
+          
+          # Review up to 50 files (default)
+          max_files: 50
+          
+          # Post all findings including suggestions
+          # This provides the most comprehensive feedback
+          severity_threshold: 'suggestion'

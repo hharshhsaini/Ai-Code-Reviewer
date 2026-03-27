@@ -1,0 +1,39 @@
+name: AI Code Review (OpenAI)
+
+# Trigger on pull request events
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    
+    # Required permissions for the action
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: AI Code Review with GPT
+        uses: your-org/ai-code-reviewer@v1
+        with:
+          # GitHub token for API authentication (automatically provided)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # OpenAI API key (add this to your repository secrets)
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          
+          # Model selection - GPT-4 for high quality reviews
+          model: 'gpt-4'
+          
+          # Alternative models:
+          # - 'gpt-4-turbo' for large PRs with many files
+          # - 'gpt-3.5-turbo' for budget-friendly, faster reviews
+          
+          # Optional: Limit number of files to review (default: 50)
+          # max_files: 50
+          
+          # Optional: Minimum severity to post (default: suggestion)
+          # Options: critical, warning, suggestion
+          # severity_threshold: 'suggestion'

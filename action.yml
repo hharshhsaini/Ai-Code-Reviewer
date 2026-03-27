@@ -1,0 +1,38 @@
+name: 'AI Code Reviewer'
+description: 'Automatically review pull requests using large language models (Anthropic Claude or OpenAI GPT)'
+author: 'AI Code Reviewer Team'
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  github_token:
+    description: 'GitHub token for API authentication (use secrets.GITHUB_TOKEN)'
+    required: true
+  
+  anthropic_api_key:
+    description: 'Anthropic API key for Claude models (required if using Anthropic)'
+    required: false
+  
+  openai_api_key:
+    description: 'OpenAI API key for GPT models (required if using OpenAI)'
+    required: false
+  
+  model:
+    description: 'LLM model to use (e.g., "claude-3-5-sonnet-20241022" or "gpt-4")'
+    required: false
+    default: 'claude-3-5-sonnet-20241022'
+  
+  max_files:
+    description: 'Maximum number of files to review (to control costs)'
+    required: false
+    default: '50'
+  
+  severity_threshold:
+    description: 'Minimum severity to post (critical, warning, or suggestion)'
+    required: false
+    default: 'suggestion'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

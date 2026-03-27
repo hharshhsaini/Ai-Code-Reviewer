@@ -1,0 +1,37 @@
+name: AI Code Review (Custom Configuration)
+
+# Trigger on pull request events
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    
+    # Required permissions for the action
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: AI Code Review with Custom Thresholds
+        uses: your-org/ai-code-reviewer@v1
+        with:
+          # GitHub token for API authentication (automatically provided)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          
+          # Anthropic API key (you can also use openai_api_key instead)
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          
+          # Model selection
+          model: 'claude-3-5-sonnet-20241022'
+          
+          # Limit to 30 files for cost control
+          # This helps manage API costs on large PRs
+          max_files: 30
+          
+          # Only post warnings and critical issues
+          # This reduces noise and focuses on important problems
+          # Options: critical, warning, suggestion
+          severity_threshold: 'warning'
