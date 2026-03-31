@@ -68,7 +68,11 @@ async function run(): Promise<void> {
     
     // 7. Initialize LLM client
     Logger.info('Initializing LLM client...');
-    const apiKey = config.provider === 'anthropic' ? config.anthropicApiKey! : config.openaiApiKey!;
+    const apiKey = config.provider === 'anthropic' 
+      ? config.anthropicApiKey! 
+      : config.provider === 'openai'
+      ? config.openaiApiKey!
+      : config.ollamaBaseUrl!;
     const llmClient = createLLMClient(config.provider, apiKey, config.model);
     
     // 8. Review each chunk and collect issues
@@ -272,6 +276,11 @@ function getMaxTokensForModel(model: string): number {
   // GPT-3.5
   if (model.includes('gpt-3.5-turbo')) {
     return 16385;
+  }
+  
+  // Ollama models - common context windows
+  if (model.includes('llama') || model.includes('mistral') || model.includes('qwen')) {
+    return 32768; // Most modern Ollama models support 32k
   }
   
   // Default to conservative limit

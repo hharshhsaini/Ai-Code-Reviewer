@@ -119,18 +119,89 @@ export class OpenAIClient implements LLMClient {
   }
 }
 
+export class OllamaClient implements LLMClient {
+  private baseUrl: string;
+  private model: string;
+  private maxRetries: number = 2;
+
+  constructor(baseUrl: string, model: string) {
+    this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    this.model = model;
+  }
+
+  async review(chunk: DiffChunk): Promise<string> {
+    const prompt = buildReviewPrompt(chunk);
+    
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        const response = await fetch(`${this.baseUrl}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an expert code reviewer. Respond with valid JSON only.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            stream: false,
+            format: 'json'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const content = (data as any).message?.content;
+        
+        if (!content) {
+          throw new Error('Empty response from Ollama API');
+        }
+        
+        return content;
+      } catch (error: any) {
+        // Check if this is a transient error that should be retried
+        const isTransient = error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED';
+        
+        if (attempt < this.maxRetries && isTransient) {
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+        
+        // Re-throw if not retryable or max retries reached
+        throw error;
+      }
+    }
+    
+    throw new Error('Max retries reached');
+  }
+}
+
 /**
  * Create LLM client based on provider
  */
 export function createLLMClient(
-  provider: 'anthropic' | 'openai',
+  provider: 'anthropic' | 'openai' | 'ollama',
   apiKey: string,
   model: string
 ): LLMClient {
   if (provider === 'anthropic') {
     return new AnthropicClient(apiKey, model);
-  } else {
+  } else if (provider === 'openai') {
     return new OpenAIClient(apiKey, model);
+  } else {
+    // For Ollama, apiKey is actually the base URL
+    return new OllamaClient(apiKey, model);
   }
 }
 

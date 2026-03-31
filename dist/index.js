@@ -90,7 +90,11 @@ async function run() {
         logger_1.Logger.info(`Created ${chunks.length} chunks`);
         // 7. Initialize LLM client
         logger_1.Logger.info('Initializing LLM client...');
-        const apiKey = config.provider === 'anthropic' ? config.anthropicApiKey : config.openaiApiKey;
+        const apiKey = config.provider === 'anthropic'
+            ? config.anthropicApiKey
+            : config.provider === 'openai'
+                ? config.openaiApiKey
+                : config.ollamaBaseUrl;
         const llmClient = (0, llm_client_1.createLLMClient)(config.provider, apiKey, config.model);
         // 8. Review each chunk and collect issues
         logger_1.Logger.info('Reviewing chunks...');
@@ -239,6 +243,10 @@ function getMaxTokensForModel(model) {
     // GPT-3.5
     if (model.includes('gpt-3.5-turbo')) {
         return 16385;
+    }
+    // Ollama models - common context windows
+    if (model.includes('llama') || model.includes('mistral') || model.includes('qwen')) {
+        return 32768; // Most modern Ollama models support 32k
     }
     // Default to conservative limit
     return 8192;

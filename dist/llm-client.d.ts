@@ -20,10 +20,17 @@ export declare class OpenAIClient implements LLMClient {
     constructor(apiKey: string, model: string);
     review(chunk: DiffChunk): Promise<string>;
 }
+export declare class OllamaClient implements LLMClient {
+    private baseUrl;
+    private model;
+    private maxRetries;
+    constructor(baseUrl: string, model: string);
+    review(chunk: DiffChunk): Promise<string>;
+}
 /**
  * Create LLM client based on provider
  */
-export declare function createLLMClient(provider: 'anthropic' | 'openai', apiKey: string, model: string): LLMClient;
+export declare function createLLMClient(provider: 'anthropic' | 'openai' | 'ollama', apiKey: string, model: string): LLMClient;
 /**
  * Construct review prompt
  */

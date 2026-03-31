@@ -18,8 +18,12 @@ inputs:
     description: 'OpenAI API key for GPT models (required if using OpenAI)'
     required: false
   
+  ollama_base_url:
+    description: 'Ollama base URL (e.g., "http://localhost:11434" - required if using Ollama)'
+    required: false
+  
   model:
-    description: 'LLM model to use (e.g., "claude-3-5-sonnet-20241022" or "gpt-4")'
+    description: 'LLM model to use (e.g., "claude-3-5-sonnet-20241022", "gpt-4", or "llama3.2")'
     required: false
     default: 'claude-3-5-sonnet-20241022'
   

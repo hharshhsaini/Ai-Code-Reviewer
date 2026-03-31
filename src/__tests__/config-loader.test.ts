@@ -128,7 +128,7 @@ describe('ConfigurationLoader', () => {
         return inputs[name] || '';
       });
 
-      expect(() => ConfigurationLoader.load()).toThrow('Either anthropic_api_key or openai_api_key must be provided');
+      expect(() => ConfigurationLoader.load()).toThrow('Either anthropic_api_key, openai_api_key, or ollama_base_url must be provided');
     });
 
     it('should throw error for invalid max_files value', () => {

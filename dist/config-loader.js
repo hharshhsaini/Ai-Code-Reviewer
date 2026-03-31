@@ -49,6 +49,7 @@ class ConfigurationLoader {
         // Read optional API keys
         const anthropicApiKey = core.getInput('anthropic_api_key') || undefined;
         const openaiApiKey = core.getInput('openai_api_key') || undefined;
+        const ollamaBaseUrl = core.getInput('ollama_base_url') || undefined;
         // Read optional configuration with defaults
         const model = core.getInput('model') || 'claude-3-5-sonnet-20241022';
         const maxFilesStr = core.getInput('max_files') || '50';
@@ -69,6 +70,7 @@ class ConfigurationLoader {
             githubToken,
             anthropicApiKey,
             openaiApiKey,
+            ollamaBaseUrl,
             model,
             maxFiles,
             severityThreshold,
@@ -82,6 +84,7 @@ class ConfigurationLoader {
             githubToken,
             anthropicApiKey,
             openaiApiKey,
+            ollamaBaseUrl,
             model,
             maxFiles,
             severityThreshold,
@@ -96,15 +99,19 @@ class ConfigurationLoader {
         if (!config.githubToken) {
             throw new Error('github_token is required');
         }
-        // At least one LLM API key must be provided
-        if (!config.anthropicApiKey && !config.openaiApiKey) {
-            throw new Error('Either anthropic_api_key or openai_api_key must be provided');
+        // At least one LLM API key or Ollama base URL must be provided
+        if (!config.anthropicApiKey && !config.openaiApiKey && !config.ollamaBaseUrl) {
+            throw new Error('Either anthropic_api_key, openai_api_key, or ollama_base_url must be provided');
         }
     }
     /**
      * Determine provider based on which API key is provided
      */
     static determineProvider(config) {
+        // If Ollama base URL is provided, use Ollama
+        if (config.ollamaBaseUrl) {
+            return 'ollama';
+        }
         // If both keys are provided, prefer Anthropic (based on default model)
         if (config.anthropicApiKey && config.openaiApiKey) {
             // Check model name to determine provider
@@ -122,7 +129,7 @@ class ConfigurationLoader {
             return 'openai';
         }
         // This should never happen due to validateCredentials check
-        throw new Error('No API key provided');
+        throw new Error('No API key or Ollama base URL provided');
     }
 }
 exports.ConfigurationLoader = ConfigurationLoader;

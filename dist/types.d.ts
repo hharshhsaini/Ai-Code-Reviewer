@@ -5,10 +5,11 @@ export interface ActionConfig {
     githubToken: string;
     anthropicApiKey?: string;
     openaiApiKey?: string;
+    ollamaBaseUrl?: string;
     model: string;
     maxFiles?: number;
     severityThreshold?: Severity;
-    provider: 'anthropic' | 'openai';
+    provider: 'anthropic' | 'openai' | 'ollama';
 }
 export type Severity = 'critical' | 'warning' | 'suggestion';
 export type Verdict = 'approve' | 'request_changes' | 'comment';

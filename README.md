@@ -1,8 +1,9 @@
 # AI Code Reviewer
 
-A GitHub Action that automatically reviews pull requests using large language models (Anthropic Claude or OpenAI GPT). Unlike traditional linters that focus on style, this tool reviews code like a senior engineer, identifying logic errors, security vulnerabilities, performance issues, and architectural concerns.
+A GitHub Action that automatically reviews pull requests using large language models (Anthropic Claude, OpenAI GPT, or Ollama). Unlike traditional linters that focus on style, this tool reviews code like a senior engineer, identifying logic errors, security vulnerabilities, performance issues, and architectural concerns.
 
 > **📖 New to this action?** Check out the [Setup Guide](SETUP_GUIDE.md) for step-by-step instructions.
+> **🆓 Want free local testing?** Check out the [Ollama Testing Guide](OLLAMA_TESTING.md) for running reviews locally.
 
 ## Overview
 
@@ -10,7 +11,8 @@ The AI Code Reviewer analyzes code changes in pull requests and provides intelli
 
 ### Key Features
 
-- 🤖 **Intelligent Analysis**: Uses state-of-the-art LLMs (Claude or GPT) for deep code understanding
+- 🤖 **Intelligent Analysis**: Uses state-of-the-art LLMs (Claude, GPT, or Ollama) for deep code understanding
+- 🆓 **Free Option**: Use Ollama for completely free, local code reviews
 - 🔍 **Focus on Real Issues**: Identifies logic errors, security vulnerabilities, and architectural concerns
 - 💬 **Inline Comments**: Posts feedback directly on specific lines of code in your PR
 - 🏷️ **Severity Labels**: Automatically labels PRs as critical, warning, or suggestion
@@ -37,6 +39,49 @@ The AI Code Reviewer analyzes code changes in pull requests and provides intelli
 ## Quick Start
 
 ### For Users (Using This Action in Your Repository)
+
+#### Option 1: Free with Ollama (Local)
+
+1. **Install Ollama** on your self-hosted runner or local machine:
+   ```bash
+   # macOS
+   brew install ollama
+   
+   # Linux
+   curl -fsSL https://ollama.ai/install.sh | sh
+   ```
+
+2. **Start Ollama and pull a model**:
+   ```bash
+   ollama serve
+   ollama pull qwen2.5-coder:7b
+   ```
+
+3. **Create workflow file** (`.github/workflows/ai-review.yml`):
+   ```yaml
+   name: AI Code Review
+   on:
+     pull_request:
+       types: [opened, synchronize]
+   
+   jobs:
+     review:
+       runs-on: self-hosted  # Must have Ollama installed
+       permissions:
+         contents: read
+         pull-requests: write
+       steps:
+         - name: AI Code Review
+           uses: hharshhsaini/Ai-Code-Reviewer@main
+           with:
+             github_token: ${{ secrets.GITHUB_TOKEN }}
+             ollama_base_url: 'http://localhost:11434'
+             model: 'qwen2.5-coder:7b'
+   ```
+
+See [OLLAMA_TESTING.md](OLLAMA_TESTING.md) for detailed Ollama setup instructions.
+
+#### Option 2: Cloud with Anthropic/OpenAI
 
 1. **Get an API Key**
    - Anthropic (recommended): Sign up at [console.anthropic.com](https://console.anthropic.com)
@@ -205,11 +250,12 @@ uses: YOUR-USERNAME/REPO-NAME@v1
 | `github_token` | GitHub token for API authentication (use `secrets.GITHUB_TOKEN`) | Yes | - |
 | `anthropic_api_key` | Anthropic API key for Claude models | No* | - |
 | `openai_api_key` | OpenAI API key for GPT models | No* | - |
+| `ollama_base_url` | Ollama base URL (e.g., `http://localhost:11434`) | No* | - |
 | `model` | Specific LLM model to use | No | `claude-3-5-sonnet-20241022` |
 | `max_files` | Maximum number of files to review (cost control) | No | `50` |
 | `severity_threshold` | Minimum severity to post: `critical`, `warning`, or `suggestion` | No | `suggestion` |
 
-*Either `anthropic_api_key` or `openai_api_key` must be provided.
+*Either `anthropic_api_key`, `openai_api_key`, or `ollama_base_url` must be provided.
 
 ### Supported Models
 
@@ -228,6 +274,17 @@ uses: YOUR-USERNAME/REPO-NAME@v1
 | `gpt-4` | 8K | High quality reviews | Input: $30, Output: $60 |
 | `gpt-4-turbo` | 128K | Large PRs with many files | Input: $10, Output: $30 |
 | `gpt-3.5-turbo` | 16K | Budget-friendly, faster reviews | Input: $0.50, Output: $1.50 |
+
+#### Ollama Models (Free, Local)
+
+| Model | Size | Best For | Context Window | Cost |
+|-------|------|----------|----------------|------|
+| `qwen2.5-coder:7b` | 7GB | Code review, best quality | 32K | Free |
+| `deepseek-coder:6.7b` | 4GB | Code understanding | 16K | Free |
+| `llama3.2:3b` | 2GB | Fast reviews, smaller PRs | 8K | Free |
+| `codellama:7b` | 4GB | Code-specific tasks | 16K | Free |
+
+> **Note**: Ollama models run locally and are completely free. See [OLLAMA_TESTING.md](OLLAMA_TESTING.md) for setup instructions.
 
 ### Severity Levels
 

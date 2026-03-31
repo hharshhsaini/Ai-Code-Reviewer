@@ -7,7 +7,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OpenAIClient = exports.AnthropicClient = void 0;
+exports.OllamaClient = exports.OpenAIClient = exports.AnthropicClient = void 0;
 exports.createLLMClient = createLLMClient;
 exports.buildReviewPrompt = buildReviewPrompt;
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
@@ -106,6 +106,65 @@ class OpenAIClient {
     }
 }
 exports.OpenAIClient = OpenAIClient;
+class OllamaClient {
+    baseUrl;
+    model;
+    maxRetries = 2;
+    constructor(baseUrl, model) {
+        this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        this.model = model;
+    }
+    async review(chunk) {
+        const prompt = buildReviewPrompt(chunk);
+        for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+            try {
+                const response = await fetch(`${this.baseUrl}/api/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: this.model,
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are an expert code reviewer. Respond with valid JSON only.'
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        stream: false,
+                        format: 'json'
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+                }
+                const data = await response.json();
+                const content = data.message?.content;
+                if (!content) {
+                    throw new Error('Empty response from Ollama API');
+                }
+                return content;
+            }
+            catch (error) {
+                // Check if this is a transient error that should be retried
+                const isTransient = error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED';
+                if (attempt < this.maxRetries && isTransient) {
+                    // Wait before retrying (exponential backoff)
+                    await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                    continue;
+                }
+                // Re-throw if not retryable or max retries reached
+                throw error;
+            }
+        }
+        throw new Error('Max retries reached');
+    }
+}
+exports.OllamaClient = OllamaClient;
 /**
  * Create LLM client based on provider
  */
@@ -113,8 +172,12 @@ function createLLMClient(provider, apiKey, model) {
     if (provider === 'anthropic') {
         return new AnthropicClient(apiKey, model);
     }
-    else {
+    else if (provider === 'openai') {
         return new OpenAIClient(apiKey, model);
+    }
+    else {
+        // For Ollama, apiKey is actually the base URL
+        return new OllamaClient(apiKey, model);
     }
 }
 /**
